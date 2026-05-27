@@ -57,31 +57,6 @@
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
 
-<!-- LOGIN PAGE -->
-<div id="loginPage" class="fixed inset-0 bg-black/80 backdrop-blur z-[9999] flex items-center justify-center">
-    <div class="w-full max-w-md bg-gray-900 border border-gray-800 rounded-3xl p-8 shadow-2xl">
-        <div class="text-center mb-8">
-            <div class="w-16 h-16 bg-brand-600 rounded-2xl mx-auto flex items-center justify-center mb-4">
-                <i data-lucide="wallet" class="w-8 h-8 text-white"></i>
-            </div>
-            <h1 class="text-2xl font-bold text-white">Laporan Keuangan</h1>
-            <p class="text-gray-400 text-sm mt-2">Masuk hanya dengan menggunakan username pribadi Anda</p>
-        </div>
-
-        <div class="space-y-4">
-            <input type="text" id="loginUsername" placeholder="Masukkan Username Anda"
-                class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-500">
-
-            <button onclick="handleLogin()" class="w-full bg-brand-600 hover:bg-brand-500 py-3 rounded-xl text-white font-bold transition">
-                Masuk / Login
-            </button>
-            <button onclick="handleRegister()" class="w-full bg-gray-700 hover:bg-gray-600 py-3 rounded-xl text-white font-bold transition">
-                Daftar Akun Baru
-            </button>
-        </div>
-    </div>
-</div>
-
     <!-- Header / Navigasi -->
     <header class="border-b border-gray-800 bg-gray-900/80 backdrop-blur sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -97,19 +72,12 @@
                 </div>
             </div>
             <div class="flex items-center space-x-2 sm:space-x-4">
-                <span id="userInfo" class="hidden text-xs bg-brand-900/50 text-brand-400 px-2.5 py-1.5 rounded-lg border border-brand-800/80 font-bold font-mono">
-                    <!-- Ditulis lewat JS -->
-                </span>
                 <span id="currentDateDisplay" class="text-[10px] sm:text-xs bg-gray-800 px-2 sm:px-3 py-1.5 rounded-lg border border-gray-700 text-gray-300 font-medium">
                     <!-- Diisi lewat JS -->
                 </span>
                 <button onclick="triggerClearDataModal()" class="p-1.5 sm:p-2 bg-red-950/40 hover:bg-red-900/40 text-red-400 rounded-lg border border-red-900/30 transition text-xs flex items-center gap-1" title="Reset Semua Data">
                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                     <span class="hidden sm:inline">Reset</span>
-                </button>
-                <button id="logoutBtn" onclick="logoutUser()" class="hidden p-1.5 sm:p-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg border border-gray-700 transition text-xs flex items-center gap-1" title="Logout">
-                    <i data-lucide="log-out" class="w-4 h-4"></i>
-                    <span class="hidden sm:inline">Logout</span>
                 </button>
             </div>
         </div>
@@ -475,7 +443,7 @@
                         </div>
                         <div>
                             <label class="text-gray-400 block mb-1">Catatan Tambahan</label>
-                            <input type="text" id="debtNotes" placeholder="Contoh: Utang beli bensin, dipinjam buat laundry" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-amber-500">
+                            <input type="text" id="debtNotes" placeholder="Contoh: Utang beli bensin, dipinjam buat laundry" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-200 font-mono focus:outline-none focus:border-amber-500">
                         </div>
                         <button type="submit" class="w-full py-2 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white font-semibold rounded-lg transition">
                             Simpan Buku Utang
@@ -558,7 +526,6 @@
         let chartInstance = null; 
         let onConfirmAction = null; 
         let currentDebtFilter = "semua"; // semua, aktif, lunas
-        let currentUser = null; // Nama User Aktif
 
         const monthNamesIndo = [
             "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -594,7 +561,7 @@
             // Tambahkan ke periode kustom jika belum ada
             if (!customPeriods.includes(period)) {
                 customPeriods.push(period);
-                localStorage.setItem(`finance_custom_periods_${currentUser}`, JSON.stringify(customPeriods));
+                localStorage.setItem("finance_custom_periods", JSON.stringify(customPeriods));
                 buildMonthDropdown();
             }
 
@@ -606,112 +573,30 @@
 
         // Simpan ke localstorage (Auto Save)
         function saveData() {
-            if (!currentUser) return;
-            localStorage.setItem(`finance_transactions_${currentUser}`, JSON.stringify(transactions));
-            localStorage.setItem(`finance_debts_${currentUser}`, JSON.stringify(debts));
-            localStorage.setItem(`finance_custom_periods_${currentUser}`, JSON.stringify(customPeriods));
+            localStorage.setItem("finance_transactions", JSON.stringify(transactions));
+            localStorage.setItem("finance_debts", JSON.stringify(debts));
+            localStorage.setItem("finance_custom_periods", JSON.stringify(customPeriods));
         }
 
-        // --- SISTEM AUTENTIKASI ---
-        function handleLogin() {
-            const usernameInput = document.getElementById('loginUsername').value.trim();
-
-            if (!usernameInput) {
-                showToast("Username tidak boleh kosong!", "error");
-                return;
-            }
-
-            const users = JSON.parse(localStorage.getItem('duitbulanan_users') || '[]');
-            const user = users.find(u => u.username.toLowerCase() === usernameInput.toLowerCase());
-
-            if (!user) {
-                showToast("Username tidak ditemukan! Silakan daftar akun baru.", "error");
-                return;
-            }
-
-            // Sukses Login
-            currentUser = user.username;
-            sessionStorage.setItem('duitbulanan_active_user', currentUser);
-            document.getElementById('loginPage').classList.add('hidden');
-            document.getElementById('logoutBtn').classList.remove('hidden');
-            
-            // Tampilkan User Info
-            document.getElementById('userInfo').textContent = `Hi, ${currentUser}`;
-            document.getElementById('userInfo').classList.remove('hidden');
-
-            loadUserData();
-            showToast(`Selamat datang kembali, ${currentUser}!`, "success");
-        }
-
-        function handleRegister() {
-            const usernameInput = document.getElementById('loginUsername').value.trim();
-
-            if (!usernameInput) {
-                showToast("Username tidak boleh kosong!", "error");
-                return;
-            }
-
-            if (usernameInput.length < 3) {
-                showToast("Username harus memiliki minimal 3 karakter!", "error");
-                return;
-            }
-
-            const users = JSON.parse(localStorage.getItem('duitbulanan_users') || '[]');
-            const userExists = users.some(u => u.username.toLowerCase() === usernameInput.toLowerCase());
-
-            if (userExists) {
-                showToast("Username sudah terdaftar! Gunakan username lain.", "error");
-                return;
-            }
-
-            // Tambahkan user baru tanpa password
-            users.push({ username: usernameInput });
-            localStorage.setItem('duitbulanan_users', JSON.stringify(users));
-
-            showToast("Pendaftaran berhasil! Silakan klik tombol Masuk.", "success");
-        }
-
-        function logoutUser() {
-            currentUser = null;
-            sessionStorage.removeItem('duitbulanan_active_user');
-            
-            // Reset input login
-            document.getElementById('loginUsername').value = "";
-            
-            // Tampilkan kembali login page
-            document.getElementById('loginPage').classList.remove('hidden');
-            document.getElementById('logoutBtn').classList.add('hidden');
-            document.getElementById('userInfo').classList.add('hidden');
-
-            // Reset dashboard states
-            transactions = [];
-            debts = [];
-            customPeriods = [];
-            renderDashboard();
-            renderDebts();
-
-            showToast("Anda berhasil keluar dari akun.", "info");
-        }
-
-        function loadUserData() {
-            // Auto-Load Transaksi per user
-            const savedData = localStorage.getItem(`finance_transactions_${currentUser}`);
+        function loadData() {
+            // Auto-Load Transaksi secara global
+            const savedData = localStorage.getItem("finance_transactions");
             if (savedData) {
                 try { transactions = JSON.parse(savedData); } catch(e) { transactions = []; }
             } else {
                 transactions = [];
             }
 
-            // Auto-Load Buku Utang per user
-            const savedDebts = localStorage.getItem(`finance_debts_${currentUser}`);
+            // Auto-Load Buku Utang secara global
+            const savedDebts = localStorage.getItem("finance_debts");
             if (savedDebts) {
                 try { debts = JSON.parse(savedDebts); } catch(e) { debts = []; }
             } else {
                 debts = [];
             }
 
-            // Auto-Load Periode Kustom per user
-            const savedPeriods = localStorage.getItem(`finance_custom_periods_${currentUser}`);
+            // Auto-Load Periode Kustom secara global
+            const savedPeriods = localStorage.getItem("finance_custom_periods");
             if (savedPeriods) {
                 try { customPeriods = JSON.parse(savedPeriods); } catch(e) { customPeriods = []; }
             } else {
@@ -738,20 +623,8 @@
             const currentYearMonth = todayStr.substring(0, 7); 
             document.getElementById('newMonthSelector').value = currentYearMonth;
 
-            // Load Session
-            const activeUser = sessionStorage.getItem('duitbulanan_active_user');
-            if (activeUser) {
-                currentUser = activeUser;
-                document.getElementById('loginPage').classList.add('hidden');
-                document.getElementById('logoutBtn').classList.remove('hidden');
-                document.getElementById('userInfo').textContent = `Hi, ${currentUser}`;
-                document.getElementById('userInfo').classList.remove('hidden');
-                loadUserData();
-            } else {
-                document.getElementById('loginPage').classList.remove('hidden');
-                document.getElementById('logoutBtn').classList.add('hidden');
-                document.getElementById('userInfo').classList.add('hidden');
-            }
+            // Memuat data secara instan
+            loadData();
 
             // Auto-Load Draft AI
             const savedDraft = localStorage.getItem('finance_ai_draft');
@@ -1036,6 +909,7 @@
             onConfirmAction = null;
         }
 
+        // --- MANAJEMEN PENGHAPUSAN DATA ---
         function triggerDeleteTransaction(id) {
             openConfirmModal("Apakah Anda yakin ingin menghapus transaksi ini? Data laporan keuangan Anda akan langsung diperbarui otomatis.", () => {
                 deleteTransaction(id);
@@ -1064,12 +938,11 @@
         }
 
         function clearAllData() {
-            if (!currentUser) return;
             transactions = [];
             debts = [];
             customPeriods = [];
             saveData(); 
-            localStorage.removeItem(`finance_custom_periods_${currentUser}`);
+            localStorage.removeItem('finance_custom_periods');
             localStorage.removeItem('finance_ai_draft');
             localStorage.removeItem('finance_selected_month');
             
